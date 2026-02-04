@@ -17,6 +17,8 @@ export const login = async (req, res) => {
         const { password: _, ...usuarioSinPass } = usuario;
         res.json({ token, usuario: usuarioSinPass });
     } catch (error) {
+        console.error("🔴 ERROR CRÍTICO EN LOGIN:", error);  // <--- Esto saldrá en los logs
+        console.error(error.message);
         res.status(500).json({ error: "Error en el servidor" });
     }
 };
