@@ -1,44 +1,27 @@
-import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import multer from 'multer';
+import dotenv from 'dotenv';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
-// 1. Asegurar que la carpeta 'uploads' exista
-const uploadDir = path.join(__dirname, "../uploads"); // Subimos 2 niveles desde /src/middlewares/
+// 1. Configurar Cloudinary
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// 2. Configuración de almacenamiento
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
+// 2. Configurar el Almacenamiento
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'le-bisou-products', // Nombre de la carpeta en Cloudinary
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
+        // transformation: [{ width: 500, height: 500, crop: 'limit' }] // Opcional: redimensionar al subir
     },
-    filename: function (req, file, cb) {
-        // Generamos nombre único: fecha + random + extensión original
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const ext = path.extname(file.originalname);
-        cb(null, 'img-' + uniqueSuffix + ext);
-    }
 });
 
-// 3. Filtro de archivos (Solo imágenes)
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
-        cb(null, true);
-    } else {
-        cb(new Error("Solo se permiten imágenes"), false);
-    }
-};
-
-const upload = multer({
-    storage: storage,
-    fileFilter: fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // Límite de 5MB
-});
+const upload = multer({ storage: storage });
 
 export default upload;

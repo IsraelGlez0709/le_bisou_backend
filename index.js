@@ -1,8 +1,6 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 
@@ -14,25 +12,36 @@ import ventasRoutes from "./routes/ventas.routes.js";
 import configuracionRoutes from "./routes/configuracion.routes.js";
 import catalogoRoutes from "./routes/catalogo.routes.js";
 
-dotenv.config();
+// Importar Middleware de Upload (Ya configurado con Cloudinary)
+import upload from "./middlewares/upload.middleware.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
+
+// Definir orígenes permitidos (Local y Producción)
+const allowedOrigins = [
+    "http://localhost:5173", 
+    "http://127.0.0.1:5173",
+    process.env.FRONTEND_URL // Tu dominio real (ej: https://le-bisou.vercel.app)
+];
 
 // Configuración Socket.IO
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Tus URL de frontend
-        methods: ["GET", "POST", "PUT"],
+        origin: allowedOrigins,
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true
     },
 });
 
 // Middleware Globales
-app.use(cors());
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
@@ -42,14 +51,18 @@ app.use((req, res, next) => {
     next();
 });
 
-// Carpeta de Imágenes Pública
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// --- ELIMINADO: Carpeta local de imágenes ---
+// app.use("/uploads", express.static(path.join(__dirname, "uploads"))); 
+// Ya no sirve archivos estáticos locales, Cloudinary se encarga.
 
-// Rutas de Upload Simple (si se necesita fuera de productos)
-import upload from "./middlewares/upload.middleware.js";
+// Rutas de Upload Simple (Modificada para Cloudinary)
 app.post("/api/upload", upload.single("imagen"), (req, res) => {
     if (!req.file) return res.status(400).json({ error: "Sin imagen" });
-    res.json({ filename: req.file.filename });
+    
+    // Cloudinary nos devuelve la URL en 'path'
+    // Devolvemos 'filename' con la URL completa para mantener compatibilidad
+    // con tu frontend actual, aunque lo ideal es guardar la URL entera.
+    res.json({ filename: req.file.path }); 
 });
 
 // --- RUTAS MODULARES ---
@@ -62,5 +75,5 @@ app.use("/api/catalogo", catalogoRoutes);
 
 // Iniciar Servidor
 httpServer.listen(PORT, () => {
-    console.log(`Servidor Multi-Usuario corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor Cloudinary corriendo en puerto ${PORT}`);
 });
