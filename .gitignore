@@ -1,0 +1,43 @@
+# --- Dependencias (Nunca se suben, se instalan con npm install) ---
+node_modules/
+
+# --- Seguridad / Entorno (CRÍTICO: Nunca subir contraseñas) ---
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# --- Archivos generados por el Sistema Operativo (Basura) ---
+.DS_Store
+Thumbs.db
+
+# --- Logs de errores (Mantener limpio el repo) ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+*.log
+
+# --- Archivos subidos por usuarios (Imágenes) ---
+# Ignoramos el contenido de la carpeta uploads porque son pruebas locales
+# No queremos llenar GitHub con fotos de joyas de prueba.
+uploads/*
+# (Opcional) Si quieres mantener la carpeta vacía en el repo, descomenta la siguiente línea y crea un archivo vacío llamado .gitkeep dentro de uploads
+# !uploads/.gitkeep
+
+# --- Prisma / Base de Datos ---
+# Si generas el cliente en una ruta custom
+/generated/prisma
+# Si usaras SQLite (por seguridad)
+*.sqlite
+*.sqlite-journal
+*.db
+
+# --- Configuración de IDEs (Opcional, gusto personal) ---
+.vscode/
+.idea/
+
+# --- Build (Si en el futuro compilas el código) ---
+dist/
+build/
